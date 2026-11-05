@@ -17,8 +17,11 @@ HERE = pathlib.Path(__file__).resolve().parent
 
 FILES = re.findall(r"^(\w+\.lua)\s*$", (ADDON / "EditModePlus.toc").read_text(), re.M)
 
+TOC_VERSION = re.search(r"^## Version: (.+)$", (ADDON / "EditModePlus.toc").read_text(), re.M).group(1).strip()
+
 lua = lua51.LuaRuntime(unpack_returned_tuples=True)
 lua.execute((HERE / "wowstub.lua").read_text())
+lua.execute('__stub.metadata.EditModePlus = { Version = "%s" }' % TOC_VERSION)
 ns = lua.eval("{}")
 loader = lua.execute("return function(src, name) return assert(loadstring(src, name)) end")
 for name in FILES:
@@ -45,6 +48,9 @@ EditModeManagerFrame:UpdateLayoutInfo()
 # --- Profiles follow the active layout --------------------------------------
 check("files loaded in toc order", FILES == ["Core.lua", "Picker.lua", "Controls.lua", "UI.lua", "EditMode.lua"])
 check("profile is the active account layout", ev("EditModePlus.GetProfileKey()") == "account:Josten")
+
+check("version read from the .toc", ev("EditModePlus.VERSION") == TOC_VERSION)
+check("version shown in the window", ev('(function() for _, r in ipairs({EditModePlusFrame:GetRegions()}) do if r.__text == "v" .. EditModePlus.VERSION then return true end end end)()'))
 
 # --- Paths -------------------------------------------------------------------
 check("path for named frame", ev("EditModePlus.GetPath(Minimap)") == "Minimap")

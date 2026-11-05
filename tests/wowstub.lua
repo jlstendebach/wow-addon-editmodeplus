@@ -250,6 +250,8 @@ end
 
 Enum = { EditModeLayoutType = { Preset = 0, Account = 1, Character = 2, Override = 3 } }
 function UnitName() return "Josten" end
+stub.metadata = {}
+C_AddOns = { GetAddOnMetadata = function(name, field) return (stub.metadata[name] or {})[field] end }
 function GetRealmName() return "Realm" end
 
 -- Edit Mode, following Blizzard's call order in EditModeManager.lua.

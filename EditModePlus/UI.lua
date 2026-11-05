@@ -66,6 +66,10 @@ end
 local title = Controls.Label(frame, "GameFontHighlightLarge", "Edit Mode Plus")
 title:SetPoint("TOP", 0, -15)
 
+local versionText = Controls.Label(frame, "GameFontDisableSmall",
+    EditModePlus.VERSION and ("v" .. EditModePlus.VERSION) or "")
+versionText:SetPoint("BOTTOMLEFT", title, "BOTTOMRIGHT", 6, 1)
+
 local layoutText = Controls.Label(frame, "GameFontDisableSmall", "")
 layoutText:SetPoint("TOP", title, "BOTTOM", 0, -4)
 layoutText:SetJustifyH("CENTER")
@@ -368,6 +372,9 @@ if Settings and Settings.RegisterCanvasLayoutCategory and Settings.RegisterAddOn
     local panel = CreateFrame("Frame")
     local heading = Controls.Label(panel, "GameFontNormalLarge", "Edit Mode Plus")
     heading:SetPoint("TOPLEFT", 16, -16)
+    local version = Controls.Label(panel, "GameFontDisableSmall",
+        EditModePlus.VERSION and ("Version " .. EditModePlus.VERSION) or "")
+    version:SetPoint("BOTTOMLEFT", heading, "BOTTOMRIGHT", 8, 1)
     local blurb = Controls.Label(panel, "GameFontHighlight",
         "Open Edit Mode and select anything to change its visibility, opacity and draw order.\n" ..
         "/emp lists every change in the current layout.")

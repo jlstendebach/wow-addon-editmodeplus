@@ -47,6 +47,13 @@ Hider:SetAllPoints(UIParent)
 Hider:Hide()
 EditModePlus.Hider = Hider
 
+-- The version comes from the .toc so it only lives in one place.
+do
+    local getMetadata = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
+    local ok, version = pcall(getMetadata, ADDON_NAME, "Version")
+    EditModePlus.VERSION = ok and type(version) == "string" and version or nil
+end
+
 ---------------------------------------------------------------------------
 -- Utilities
 ---------------------------------------------------------------------------
