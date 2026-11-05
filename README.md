@@ -15,6 +15,8 @@ wow-addon-editmodeplus/
 
 The folder must stay named `EditModePlus` to match `EditModePlus.toc`.
 
+For development, a local `deploy.bat` (kept out of git, since its paths are machine-specific) mirrors the folder into AddOns. Run it, then `/reload` in game, or restart WoW if files were added or removed.
+
 ## Use
 
 **In Edit Mode**
