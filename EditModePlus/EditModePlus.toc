@@ -2,7 +2,7 @@
 ## Title: Edit Mode Plus
 ## Notes: Change the visibility, opacity and draw order of anything on screen, right in Edit Mode.
 ## Author: Josh
-## Version: 1.0.0
+## Version: 1.1.0
 ## SavedVariables: EditModePlusDB
 ## IconTexture: Interface\Icons\INV_Misc_Spyglass_03
 ## AddonCompartmentFunc: EditModePlus_OnAddonCompartmentClick
