@@ -119,8 +119,29 @@ check("toolbar shown", ev("EditModePlusToolbar:IsShown()"))
 run('EditModeManagerFrame:SelectSystemFrame(MultiBarBottomLeft)')
 check("panel docks to Blizzard's dialog", ev("EditModePlusPanel:IsShown()"))
 check("panel targets the selected system", ev("EditModePlus.EditMode.GetTarget()") == "MultiBarBottomLeft")
+check("toolbar above the Edit Mode window when it fits", ev("(EditModePlusToolbar:GetPoint(1))") == "BOTTOM"
+      and ev("select(2, EditModePlusToolbar:GetPoint(1)) == EditModeManagerFrame"))
+run('EditModeManagerFrame.__rect = { 728, 360, 465, 700 }; EditModeManagerFrame:GetScript("OnDragStop")(EditModeManagerFrame)')
+check("toolbar goes below when the window is at the top of the screen", ev("(EditModePlusToolbar:GetPoint(1))") == "TOP")
+run('EditModeManagerFrame.__rect = { 728, 330, 465, 690 }; EditModeManagerFrame:GetScript("OnDragStop")(EditModeManagerFrame)')
+check("toolbar wide enough for its label", ev("EditModePlusToolbar:GetWidth()") >= 16 + 100 + 14 + 120 + 6 + 100 + 14)
+check("panel below the dialog when it fits", ev("(EditModePlusPanel:GetPoint(1))") == "TOP"
+      and ev("(select(3, EditModePlusPanel:GetPoint(1)))") == "BOTTOM")
 run('EditModeSystemSettingsDialog:Hide()')
 check("panel hides with the dialog", not ev("EditModePlusPanel:IsShown()"))
+
+# Blizzard's dialog reports a stale position during selection; the panel re-checks next frame.
+run('''
+EditModeSystemSettingsDialog.__rect = { 300, 40, 383, 200 }     -- stale: near the bottom
+EditModeManagerFrame:SelectSystemFrame(MultiBarBottomLeft)
+EditModeSystemSettingsDialog.__rect = { 300, 400, 383, 200 }    -- where it actually settles
+''')
+check("stale measurement places it above at first", ev("(EditModePlusPanel:GetPoint(1))") == "BOTTOM")
+run('__stub.RunTimers()')
+check("settled measurement moves it below", ev("(EditModePlusPanel:GetPoint(1))") == "TOP")
+run('EditModeSystemSettingsDialog.__rect = { 300, 30, 383, 200 }; EditModeSystemSettingsDialog:GetScript("OnDragStop")(EditModeSystemSettingsDialog)')
+check("dragged near the bottom: panel flips above", ev("(EditModePlusPanel:GetPoint(1))") == "BOTTOM")
+run('EditModeSystemSettingsDialog.__rect = { 300, 400, 383, 350 }; EditModeSystemSettingsDialog:Hide()')
 
 # --- Edit Mode: staged edits, Save --------------------------------------------
 run('EditModeManagerFrame:SelectSystemFrame(MainActionBar.EndCaps.LeftEndCap)')

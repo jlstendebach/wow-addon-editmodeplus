@@ -143,26 +143,59 @@ resetButton:SetScript("OnClick", function()
     if path then EditModePlus.Clear(path) end
 end)
 
+-- Space below and above `anchor`, in `frame`'s units, or nil if unknown.
+local function SpaceAround(frame, anchor)
+    local bottom, top = anchor:GetBottom(), anchor:GetTop()
+    local screenTop = UIParent:GetTop()
+    if not bottom or not top or not screenTop then return nil end
+    local frameScale = frame:GetEffectiveScale() or 1
+    local scale = (anchor:GetEffectiveScale() or 1) / frameScale
+    local screenScale = (UIParent:GetEffectiveScale() or 1) / frameScale
+    return bottom * scale, screenTop * screenScale - top * scale
+end
+
+-- Centers `frame` under `anchor` (or over it with preferAbove). Switches
+-- sides only when the preferred side is too small and the other one fits.
+local function Attach(frame, anchor, preferAbove, gap)
+    local below, above = SpaceAround(frame, anchor)
+    local height = frame:GetHeight() or 0
+    local placeAbove = preferAbove
+    if below and above then
+        if preferAbove and above < height and below >= height then placeAbove = false end
+        if not preferAbove and below < height and above >= height then placeAbove = true end
+    end
+    frame:ClearAllPoints()
+    if placeAbove then
+        frame:SetPoint("BOTTOM", anchor, "TOP", 0, gap)
+    else
+        frame:SetPoint("TOP", anchor, "BOTTOM", 0, -gap)
+    end
+end
+
 local function Reposition()
-    panel:ClearAllPoints()
     local dialog = EditModeSystemSettingsDialog
     if mode == "docked" and dialog then
         panel:SetWidth(math.max(PANEL_WIDTH, dialog:GetWidth() or 0))
-        -- Below the dialog if it fits on screen, otherwise above it.
-        local bottom = dialog:GetBottom()
-        local scale = (dialog:GetEffectiveScale() or 1) / (panel:GetEffectiveScale() or 1)
-        if bottom and bottom * scale - panel:GetHeight() < 0 then
-            panel:SetPoint("BOTTOMLEFT", dialog, "TOPLEFT", 0, 0)
-        else
-            panel:SetPoint("TOPLEFT", dialog, "BOTTOMLEFT", 0, 0)
-        end
+        Attach(panel, dialog, false, 0)
     elseif EditModeManagerFrame and EditModeManagerFrame:IsShown() then
         panel:SetWidth(PANEL_WIDTH)
+        panel:ClearAllPoints()
         panel:SetPoint("TOPLEFT", EditModeManagerFrame, "TOPRIGHT", 6, 0)
     else
         panel:SetWidth(PANEL_WIDTH)
+        panel:ClearAllPoints()
         panel:SetPoint("CENTER")
     end
+end
+
+-- Blizzard moves its dialog into place in the same call that selects a
+-- system, and a frame's position isn't measurable until the next frame.
+-- Place the panel now, then again once positions have settled.
+local function RepositionSoon()
+    Reposition()
+    C_Timer.After(0, function()
+        if panel:IsShown() then Reposition() end
+    end)
 end
 
 local function UpdateHeight()
@@ -195,7 +228,7 @@ local function SetPanelTarget(path, displayName)
     closeButton:SetShown(mode == "free")
     panel:Show()
     RefreshPanel()
-    Reposition()
+    RepositionSoon()
 end
 
 -- Follows Blizzard's settings dialog for a selected Edit Mode system.
@@ -236,7 +269,7 @@ controls:SetPoint("TOP", 0, -HEADER_HEIGHT)
 
 local toolbar = CreateFrame("Frame", "EditModePlusToolbar", UIParent)
 toolbar.__editModePlusUI = true
-toolbar:SetSize(330, 46)
+toolbar:SetSize(380, 46)
 toolbar:SetFrameStrata("DIALOG")
 toolbar:SetFrameLevel(210)
 toolbar:EnableMouse(true)
@@ -287,11 +320,22 @@ StaticPopupDialogs["EDITMODEPLUS_UNSAVED_CHANGES"] = {
 -- Hooks
 ---------------------------------------------------------------------------
 
+-- Sized to its contents; above the Edit Mode window, where it covers less
+-- than below it (the cast bar sits there by default).
+local function PlaceToolbar()
+    local width = 16 + (toolbarLabel:GetStringWidth() or 100) + 14
+        + pickButton:GetWidth() + 6 + overviewButton:GetWidth() + 14
+    toolbar:SetWidth(math.max(width, 300))
+    if EditModeManagerFrame then Attach(toolbar, EditModeManagerFrame, true, 2) end
+end
+
 local function OnEnter()
     EditModePlus.SetEditMode(true)
-    toolbar:ClearAllPoints()
-    toolbar:SetPoint("TOP", EditModeManagerFrame, "BOTTOM", 0, -2)
+    PlaceToolbar()
     toolbar:Show()
+    C_Timer.After(0, function()
+        if toolbar:IsShown() then PlaceToolbar() end
+    end)
     SyncButtons()
 end
 
@@ -325,6 +369,14 @@ function EM.Init()
     end)
     dialog:HookScript("OnSizeChanged", function()
         if mode == "docked" and panel:IsShown() then Reposition() end
+    end)
+    -- Both windows can be dragged; re-check which side has room afterwards.
+    dialog:HookScript("OnDragStop", function()
+        if mode == "docked" and panel:IsShown() then Reposition() end
+    end)
+    mgr:HookScript("OnDragStop", function()
+        if toolbar:IsShown() then PlaceToolbar() end
+        if mode == "free" and panel:IsShown() then Reposition() end
     end)
 
     -- Layouts

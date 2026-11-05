@@ -83,6 +83,17 @@ function Object:SetAlpha(a) self.__alpha = a end
 function Object:GetRect() local r = self.__rect; return r[1], r[2], r[3], r[4] end
 function Object:GetWidth() return self.__rect[3] end
 function Object:GetHeight() return self.__rect[4] end
+function Object:GetBottom() return self.__rect[2] end
+function Object:GetTop() return self.__rect[2] + self.__rect[4] end
+function Object:SetWidth(w) self.__rect = { self.__rect[1], self.__rect[2], w, self.__rect[4] } end
+function Object:SetHeight(h) self.__rect = { self.__rect[1], self.__rect[2], self.__rect[3], h } end
+function Object:SetSize(w, h) self:SetWidth(w); self:SetHeight(h or w) end
+function Object:SetPoint(point, relativeTo, relativePoint, x, y)
+  self.__points = self.__points or {}
+  table.insert(self.__points, { point, relativeTo, relativePoint, x, y })
+end
+function Object:ClearAllPoints() self.__points = {} end
+function Object:GetPoint(i) local p = (self.__points or {})[i or 1]; if p then return unpack(p) end end
 function Object:GetEffectiveScale() return 1 end
 function Object:IsMouseOver()
   local r = self.__rect; local x, y = stub.cursor[1], stub.cursor[2]
@@ -302,7 +313,6 @@ function mgr:SelectSystemFrame(f) f.isSelected = true; EditModeSystemSettingsDia
 EditModeSystemSettingsDialog = CreateFrame("Frame", "EditModeSystemSettingsDialog", UIParent)
 EditModeSystemSettingsDialog:Hide()
 EditModeSystemSettingsDialog.__rect = { 300, 400, 383, 350 }
-function EditModeSystemSettingsDialog:GetBottom() return self.__rect[2] end
-function EditModeSystemSettingsDialog:GetWidth() return self.__rect[3] end
+mgr.__rect = { 728, 330, 465, 690 }
 function EditModeSystemSettingsDialog:AttachToSystemFrame(f) self.attachedToSystem = f; self:Show() end
 EditModeSystemSettingsDialog:SetScript("OnHide", function(self) self.attachedToSystem = nil end)
